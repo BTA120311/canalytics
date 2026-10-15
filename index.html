@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <title>Canalytics — Система взаимного оценивания учителей и учеников</title>
+
+  <!-- Подключение твоего фавикона 500x500 (поддерживает png, svg, jpg, ico) -->
+  <link rel="icon" type="image/png" sizes="500x500" href="favicon.png" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="apple-touch-icon" sizes="500x500" href="favicon.png" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts: Inter, Playfair Display, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-beige: #fef0d5;
+      --bg-beige-2: #f7e4be;
+      --brand-burgundy: #471224;
+      --burgundy-hover: #5e1830;
+      --surface-white: #ffffff;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: radial-gradient(circle at 15% 0%, #fff8eb 0%, var(--bg-beige) 55%, #faead0 100%);
+      color: var(--brand-burgundy);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding-bottom: calc(80px + var(--safe-bottom));
+    }
+
+    @media (min-width: 1024px) {
+      body {
+        padding-bottom: 0;
+      }
+    }
+
+    .font-serif-display {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Матовое стекло Apple */
+    .apple-header-glass {
+      background: rgba(254, 240, 213, 0.86);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-bottom: 1px solid rgba(71, 18, 36, 0.08);
+    }
+
+    .apple-dock-glass {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-top: 1px solid rgba(71, 18, 36, 0.1);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* Карточки Bento */
+    .bento-card {
+      background-color: var(--surface-white);
+      border-radius: 26px;
+      border: 1px solid rgba(71, 18, 36, 0.08);
+      box-shadow: 0 16px 38px -14px rgba(71, 18, 36, 0.06);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.25s ease;
+    }
+
+    @media (hover: hover) {
+      .bento-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 24px 48px -14px rgba(71, 18, 36, 0.12);
+        border-color: rgba(71, 18, 36, 0.18);
+      }
+    }
+
+    /* Компактный сегментированный контрол, который гарантированно влезает в экран */
+    .seg-pill-group {
+      background: rgba(71, 18, 36, 0.065);
+      padding: 4px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      border: 1px solid rgba(71, 18, 36, 0.06);
+      max-width: 100%;
+    }
+
+    .seg-pill-btn {
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(71, 18, 36, 0.68);
+      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      cursor: pointer;
+      white-space: nowrap;
+      border: none;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      user-select: none;
+    }
+
+    @media (min-width: 1280px) {
+      .seg-pill-btn {
+        padding: 8px 15px;
+        font-size: 12.5px;
+      }
+    }
+
+    .seg-pill-btn:hover {
+      color: var(--brand-burgundy);
+    }
+
+    .seg-pill-btn.active {
+      background-color: var(--brand-burgundy);
+      color: var(--surface-white);
+      box-shadow: 0 4px 12px rgba(71, 18, 36, 0.2);
+    }
+
+    /* Ползунки 1-10 */
+    input[type="range"].apple-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 7px;
+      background: var(--bg-beige);
+      border-radius: 999px;
+      outline: none;
+      border: 1px solid rgba(71, 18, 36, 0.12);
+      cursor: pointer;
+    }
+
+    input[type="range"].apple-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--brand-burgundy);
+      border: 3px solid var(--surface-white);
+      box-shadow: 0 2px 8px rgba(71, 18, 36, 0.3);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"].apple-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+    }
+
+    .factor-chip {
+      background-color: var(--bg-beige);
+      color: var(--brand-burgundy);
+      border: 1px solid rgba(71, 18, 36, 0.14);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .factor-chip.active {
+      background-color: var(--brand-burgundy);
+      color: var(--surface-white);
+      border-color: var(--brand-burgundy);
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface-white);
+      border-radius: 28px 28px 0 0;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 -16px 48px rgba(71, 18, 36, 0.22);
+    }
+
+    @media (min-width: 640px) {
+      .modal-sheet {
+        border-radius: 28px;
+        max-height: 88vh;
+        box-shadow: 0 28px 64px rgba(71, 18, 36, 0.26);
+      }
+    }
+
+    .rbac-locked {
+      background-color: rgba(71, 18, 36, 0.05);
+      color: rgba(71, 18, 36, 0.45);
+      border: 1px dashed rgba(71, 18, 36, 0.2);
+      cursor: not-allowed;
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printable-dossier, #printable-dossier * { visibility: visible; }
+      #printable-dossier {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        box-shadow: none !important;
+      }
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-beige); }
+    ::-webkit-scrollbar-thumb { background: rgba(71, 18, 36, 0.24); border-radius: 999px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#471224] selection:text-[#fef0d5]">
+
+  <!-- =========================================================================
+       ВЕРХНЯЯ ПАНЕЛЬ CANALYTICS (ВСЕ ЭЛЕМЕНТЫ ПОМЕЩАЮТСЯ БЕЗ ОБРЕЗАНИЙ)
+       ========================================================================= -->
+  <header class="sticky top-0 z-40 apple-header-glass">
+    <div class="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 lg:py-0 lg:h-20 flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5">
+
+      <!-- 1. Логотип Canalytics (файл logo.png / logo.svg / logo.jpg) -->
+      <div onclick="switchTab('teachers')" class="flex items-center gap-2.5 cursor-pointer shrink-0">
+        <div class="w-10 h-10 rounded-2xl bg-[#471224] text-[#fef0d5] flex items-center justify-center overflow-hidden shadow-sm shrink-0 border border-[#471224]/15">
+          <img
+            id="brand-logo-img"
+            src="logo.png"
+            alt="Canalytics Logo"
+            class="w-full h-full object-cover"
+            onerror="handleLogoFallback(this)"
+          />
+          <span id="brand-logo-fallback" class="hidden font-serif-display font-bold text-xl">C</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-serif-display font-bold text-base sm:text-lg tracking-tight text-[#471224] leading-none">Canalytics</span>
+            <span id="header-rbac-chip" class="px-1.5 py-0.5 rounded-md bg-[#471224]/10 text-[#471224] font-mono-code text-[10px] font-bold">
+              RBAC 360°
+            </span>
+          </div>
+          <span class="text-[11px] text-[#471224]/60 font-medium hidden xl:block">Взаимное оценивание учителей и учеников</span>
+        </div>
+      </div>
+
+      <!-- 2. Центральная навигация (5 вкладок без QR-пульса — идеально помещаются) -->
+      <nav class="hidden lg:flex items-center seg-pill-group shrink-0">
+        <button onclick="switchTab('teachers')" id="nav-desk-teachers" class="seg-pill-btn active">
+          <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+          <span>Учителя</span>
+        </button>
+        <button onclick="switchTab('students')" id="nav-desk-students" class="seg-pill-btn">
+          <i data-lucide="users" class="w-3.5 h-3.5"></i>
+          <span>Ученики</span>
+        </button>
+        <button onclick="switchTab('matrix')" id="nav-desk-matrix" class="seg-pill-btn">
+          <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+          <span>Матрица X и Аргументы</span>
+        </button>
+        <button onclick="switchTab('compare')" id="nav-desk-compare" class="seg-pill-btn">
+          <i data-lucide="git-compare" class="w-3.5 h-3.5"></i>
+          <span>Сравнение 360°</span>
+        </button>
+        <button onclick="switchTab('rbac')" id="nav-desk-rbac" class="seg-pill-btn">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+          <span>Права и Аудит</span>
+        </button>
+      </nav>
+
+      <!-- 3. Правый блок: Компактный Поиск + Переключатель Ролей (не вылезает за край!) -->
+      <div class="flex items-center gap-2 shrink-0 ml-auto lg:ml-0">
+        <button
+          onclick="openSpotlight()"
+          title="Быстрый поиск (Cmd + K)"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#471224]/15 text-xs font-medium text-[#471224]/75 hover:border-[#471224] transition shadow-sm"
+        >
+          <i data-lucide="search" class="w-3.5 h-3.5 text-[#471224]"></i>
+          <span class="hidden sm:inline">Поиск</span>
+          <kbd class="hidden xl:inline-block px-1.5 py-0.5 text-[10px] font-mono-code bg-[#fef0d5] text-[#471224] rounded">⌘K</kbd>
+        </button>
+
+        <!-- Сегментированный переключатель ролей -->
+        <div class="seg-pill-group">
+          <button onclick="setRole('student')" id="role-btn-student" class="seg-pill-btn active !py-1.5 !px-2.5 sm:!px-3 !text-xs">Ученик</button>
+          <button onclick="setRole('teacher')" id="role-btn-teacher" class="seg-pill-btn !py-1.5 !px-2.5 sm:!px-3 !text-xs">Учитель</button>
+          <button onclick="setRole('director')" id="role-btn-director" class="seg-pill-btn !py-1.5 !px-2.5 sm:!px-3 !text-xs">Директор</button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ ДЛЯ СМАРТФОНОВ И ПЛАНШЕТОВ (< 1024px)
+       ========================================================================= -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 apple-dock-glass px-2 py-2 flex items-center justify-around">
+    <button onclick="switchTab('teachers')" id="nav-mob-teachers" class="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl text-[#471224] font-bold">
+      <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+      <span class="text-[10px]">Учителя</span>
+    </button>
+    <button onclick="switchTab('students')" id="nav-mob-students" class="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl text-[#471224]/50 font-medium">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[10px]">Ученики</span>
+    </button>
+    <button onclick="switchTab('matrix')" id="nav-mob-matrix" class="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl text-[#471224]/50 font-medium">
+      <i data-lucide="shield-alert" class="w-5 h-5"></i>
+      <span class="text-[10px]">Матрица X</span>
+    </button>
+    <button onclick="switchTab('compare')" id="nav-mob-compare" class="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl text-[#471224]/50 font-medium">
+      <i data-lucide="git-compare" class="w-5 h-5"></i>
+      <span class="text-[10px]">Сравнение</span>
+    </button>
+    <button onclick="switchTab('rbac')" id="nav-mob-rbac" class="flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl text-[#471224]/50 font-medium">
+      <i data-lucide="lock" class="w-5 h-5"></i>
+      <span class="text-[10px]">Права</span>
+    </button>
+  </nav>
+
+  <!-- =========================================================================
+       ОСНОВНОЙ КОНТЕЙНЕР CANALYTICS (АДАПТИВНЫЙ ПОД ЛЮБОЕ УСТРОЙСТВО)
+       ========================================================================= -->
+  <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+
+    <!-- ДИНАМИЧЕСКИЙ БАННЕР АКТИВНОЙ РОЛИ И ПРАВ ДОСТУПА (RBAC) -->
+    <div class="bento-card p-6 sm:p-8 relative overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-bold">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+              <span id="rbac-identity-badge">Сессия: Ученик • Айдар Басиров (9 «Инженерный» класс)</span>
+            </span>
+            <span id="rbac-clearance-pill" class="px-3 py-1 rounded-full bg-[#471224] text-[#fef0d5] font-mono-code text-[11px] font-semibold">
+              RBAC LEVEL 1 • STUDENT
+            </span>
+          </div>
+
+          <h1 id="rbac-hero-heading" class="font-serif-display text-2xl sm:text-4xl font-bold text-[#471224] tracking-tight leading-tight">
+            Оценивайте качество проведения уроков и поддерживайте одноклассников
+          </h1>
+
+          <p id="rbac-hero-desc" class="text-xs sm:text-sm text-[#471224]/70 leading-relaxed max-w-2xl">
+            В режиме ученика ваши оценки учителям полностью анонимны. Оценка ниже 5.0 требует обязательной аргументации, проверяемой ИИ-фильтром. Изменение учительских баллов одноклассников и управление директорскими протоколами заблокированы.
+          </p>
+
+          <div id="rbac-quick-actions" class="pt-1 flex flex-wrap gap-2.5"></div>
+        </div>
+
+        <!-- Правая карточка активных разрешений текущей роли -->
+        <div class="lg:col-span-5 bg-[#fef0d5]/50 rounded-3xl p-5 border border-[#471224]/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-[#471224]/65">Активная матрица прав</span>
+            <button onclick="switchTab('rbac')" class="text-xs font-semibold text-[#471224] underline">Журнал аудита →</button>
+          </div>
+          <div id="rbac-permissions-list" class="space-y-2 text-xs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- СВОДНЫЕ МЕТРИКИ CANALYTICS (4 BENTO КАРТОЧКИ) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div class="bento-card p-6 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#471224]/55">
+          <span>Средний индекс учителей</span>
+          <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+        </div>
+        <div class="my-2.5">
+          <div class="font-serif-display text-3xl sm:text-4xl font-bold text-[#471224]" id="kpi-teachers-avg">7.9</div>
+          <p class="text-xs text-[#471224]/60 mt-1">По 3 шкалам: Объяснение, Дисциплина, Свобода</p>
+        </div>
+        <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full w-fit">
+          Порог нормы: X ≥ 5.0
+        </span>
+      </div>
+
+      <div class="bento-card p-6 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#471224]/55">
+          <span>Средний индекс учеников</span>
+          <i data-lucide="users" class="w-4 h-4"></i>
+        </div>
+        <div class="my-2.5">
+          <div class="font-serif-display text-3xl sm:text-4xl font-bold text-[#471224]" id="kpi-students-avg">8.1</div>
+          <p class="text-xs text-[#471224]/60 mt-1">Активность, Дисциплина, Инициатива</p>
+        </div>
+        <span class="text-[11px] font-semibold text-[#471224] bg-[#fef0d5] px-3 py-1 rounded-full w-fit">
+          Параллели 8–11 классов
+        </span>
+      </div>
+
+      <div class="bento-card p-6 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#471224]/55">
+          <span>Протоколы контроля (X &lt; 5)</span>
+          <i data-lucide="alert-circle" class="w-4 h-4"></i>
+        </div>
+        <div class="my-2.5">
+          <div class="font-serif-display text-3xl sm:text-4xl font-bold text-amber-800" id="kpi-alerts-count">6</div>
+          <p class="text-xs text-[#471224]/60 mt-1">Требуют внимания куратора или директора</p>
+        </div>
+        <button onclick="switchTab('matrix')" class="text-xs font-semibold text-[#471224] underline text-left">
+          Открыть протоколы →
+        </button>
+      </div>
+
+      <div class="bento-card p-6 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#471224]/55">
+          <span>Верифицированные аргументы</span>
+          <i data-lucide="message-square-check" class="w-4 h-4"></i>
+        </div>
+        <div class="my-2.5">
+          <div class="font-serif-display text-3xl sm:text-4xl font-bold text-[#471224]" id="kpi-arguments-count">8</div>
+          <p class="text-xs text-[#471224]/60 mt-1">100% прошли ИИ-фильтр вежливости</p>
+        </div>
+        <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full w-fit">
+          Защита от буллинга активна
+        </span>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         ВКЛАДКА 1: РЕЙТИНГ И ОЦЕНИВАНИЕ УЧИТЕЛЕЙ (12 ПРЕПОДАВАТЕЛЕЙ)
+         ======================================================================= -->
+    <section id="sec-teachers" class="space-y-6">
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-[#471224]">Педагогический состав школы</h2>
+          <p class="text-xs sm:text-sm text-[#471224]/65 mt-0.5">
+            Формула статуса: <strong>X ≥ 5.0</strong> — Всё в норме • <strong>2.0 &lt; X &lt; 5.0</strong> — Беседа с директором • <strong>0 ≤ X ≤ 2.0</strong> — Открытый урок
+          </p>
+        </div>
+
+        <!-- Фильтры и поиск -->
+        <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
+          <div class="relative flex-1 sm:flex-initial">
+            <i data-lucide="search" class="w-4 h-4 text-[#471224]/45 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input
+              id="teacher-search-input"
+              type="text"
+              oninput="renderTeachers()"
+              placeholder="Поиск по ФИО или предмету..."
+              class="w-full sm:w-56 pl-9 pr-4 py-2 rounded-full bg-white border border-[#471224]/15 text-xs text-[#471224] focus:outline-none focus:border-[#471224]"
+            />
+          </div>
+
+          <select id="teacher-dept-select" onchange="renderTeachers()" class="px-3.5 py-2 rounded-full bg-white border border-[#471224]/15 text-xs font-semibold text-[#471224] focus:outline-none">
+            <option value="all">Все кафедры (12)</option>
+            <option value="stem">Точные науки и IT</option>
+            <option value="nat">Естественные науки</option>
+            <option value="hum">Гуманитарные науки</option>
+          </select>
+
+          <div class="seg-pill-group self-start sm:self-auto overflow-x-auto">
+            <button onclick="setTeacherZoneFilter('all')" id="tz-all" class="seg-pill-btn active !py-1.5 !px-3 !text-xs">Все</button>
+            <button onclick="setTeacherZoneFilter('norm')" id="tz-norm" class="seg-pill-btn !py-1.5 !px-3 !text-xs">X ≥ 5</button>
+            <button onclick="setTeacherZoneFilter('warn')" id="tz-warn" class="seg-pill-btn !py-1.5 !px-3 !text-xs">2 &lt; X &lt; 5</button>
+            <button onclick="setTeacherZoneFilter('crit')" id="tz-crit" class="seg-pill-btn !py-1.5 !px-3 !text-xs">X ≤ 2</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="teachers-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- =======================================================================
+         ВКЛАДКА 2: РЕЙТИНГ И ОЦЕНИВАНИЕ УЧЕНИКОВ (16 УЧЕНИКОВ 8–11 КЛАССОВ)
+         ======================================================================= -->
+    <section id="sec-students" class="hidden space-y-6">
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-[#471224]">Рейтинг и портфолио учеников</h2>
+          <p class="text-xs sm:text-sm text-[#471224]/65 mt-0.5">
+            Формула статуса: <strong>X ≥ 5.0</strong> — Всё в норме • <strong>2.0 &lt; X &lt; 5.0</strong> — Предупреждение • <strong>0 ≤ X ≤ 2.0</strong> — Беседа с директором
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
+          <div class="relative flex-1 sm:flex-initial">
+            <i data-lucide="search" class="w-4 h-4 text-[#471224]/45 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input
+              id="student-search-input"
+              type="text"
+              oninput="renderStudents()"
+              placeholder="Поиск ученика по имени..."
+              class="w-full sm:w-56 pl-9 pr-4 py-2 rounded-full bg-white border border-[#471224]/15 text-xs text-[#471224] focus:outline-none focus:border-[#471224]"
+            />
+          </div>
+
+          <select id="student-grade-select" onchange="renderStudents()" class="px-3.5 py-2 rounded-full bg-white border border-[#471224]/15 text-xs font-semibold text-[#471224] focus:outline-none">
+            <option value="all">Все параллели (8–11 кл.)</option>
+            <option value="8">8 параллель</option>
+            <option value="9">9 параллель</option>
+            <option value="10">10 параллель</option>
+            <option value="11">11 параллель</option>
+          </select>
+
+          <div class="seg-pill-group self-start sm:self-auto">
+            <button onclick="setStudentZoneFilter('all')" id="sz-all" class="seg-pill-btn active !py-1.5 !px-3 !text-xs">Все</button>
+            <button onclick="setStudentZoneFilter('norm')" id="sz-norm" class="seg-pill-btn !py-1.5 !px-3 !text-xs">X ≥ 5</button>
+            <button onclick="setStudentZoneFilter('low')" id="sz-low" class="seg-pill-btn !py-1.5 !px-3 !text-xs">X &lt; 5</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="students-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- =======================================================================
+         ВКЛАДКА 3: МАТРИЦА ПОРОГОВ X, ПРОТОКОЛЫ ДИРЕКТОРА И ЛЕНТА АРГУМЕНТОВ
+         ======================================================================= -->
+    <section id="sec-matrix" class="hidden space-y-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Интерактивный симулятор формул порога X -->
+        <div class="lg:col-span-5 bento-card p-6 sm:p-8 space-y-5">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-widest text-[#471224]/55">Математическое ядро Canalytics</span>
+            <h3 class="font-serif-display text-2xl font-bold text-[#471224] mt-1">Симулятор порогов индекса X</h3>
+            <p class="text-xs text-[#471224]/65 mt-1">
+              Проверьте, как система автоматически определяет протокол реагирования для учителей и учеников
+            </p>
+          </div>
+
+          <div class="p-5 rounded-3xl bg-[#fef0d5]/55 border border-[#471224]/10 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase text-[#471224]">Тестовый индекс X:</span>
+              <span id="sim-x-badge" class="px-3.5 py-1 rounded-full bg-[#471224] text-[#fef0d5] font-mono-code text-sm font-bold">X = 7.5</span>
+            </div>
+
+            <input id="sim-x-range" type="range" min="0" max="10" step="0.1" value="7.5" class="apple-slider" oninput="updateFormulaSim(this.value)" />
+
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <button onclick="setFormulaSim(8.5)" class="px-3 py-1 rounded-full bg-white text-[#471224] text-[11px] font-semibold border border-[#471224]/15">Норма (8.5)</button>
+              <button onclick="setFormulaSim(3.8)" class="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-semibold">Внимание (3.8)</button>
+              <button onclick="setFormulaSim(1.5)" class="px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-[11px] font-semibold">Критично (1.5)</button>
+            </div>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="p-4 rounded-2xl bg-[#fef0d5]/40 border border-[#471224]/10">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-[#471224]/55 block">Протокол для учителя</span>
+              <div id="sim-teacher-out" class="font-bold text-sm text-[#471224] mt-1">X ≥ 5.0 • Всё в норме (Поощрение и трансляция опыта)</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-[#fef0d5]/40 border border-[#471224]/10">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-[#471224]/55 block">Протокол для ученика</span>
+              <div id="sim-student-out" class="font-bold text-sm text-[#471224] mt-1">X ≥ 5.0 • Всё в норме (Активное портфолио 360°)</div>
+            </div>
+          </div>
+
+          <div class="h-52 w-full pt-2">
+            <canvas id="parallelAnalyticsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Активные протоколы контроля X < 5 (управляются Директором) -->
+        <div class="lg:col-span-7 bento-card p-6 sm:p-8 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-widest text-[#471224]/55">Контроль качества образования</span>
+              <h3 class="font-serif-display text-2xl font-bold text-[#471224] mt-1">Активные протоколы при X &lt; 5.0</h3>
+            </div>
+            <span id="matrix-rbac-hint" class="px-3 py-1 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold w-fit">
+              Режим чтения (Для управления переключитесь на Директора)
+            </span>
+          </div>
+
+          <div id="active-protocols-list" class="space-y-3.5"></div>
+        </div>
+
+      </div>
+
+      <!-- Верифицированный журнал аргументации с официальными ответами -->
+      <div class="bento-card p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-widest text-[#471224]/55">Доказательная обратная связь</span>
+            <h3 class="font-serif-display text-2xl font-bold text-[#471224] mt-1">Журнал проверенной аргументации</h3>
+          </div>
+          <div class="seg-pill-group self-start md:self-auto overflow-x-auto">
+            <button onclick="setArgFilter('all')" id="af-all" class="seg-pill-btn active !py-1.5 !px-3 !text-xs">Все отзывы</button>
+            <button onclick="setArgFilter('Человеческий фактор')" id="af-human" class="seg-pill-btn !py-1.5 !px-3 !text-xs">Чел. фактор</button>
+            <button onclick="setArgFilter('Выделение любимчиков')" id="af-fav" class="seg-pill-btn !py-1.5 !px-3 !text-xs">Любимчики</button>
+            <button onclick="setArgFilter('Игнорирование идей')" id="af-ignore" class="seg-pill-btn !py-1.5 !px-3 !text-xs">Игнор идей</button>
+          </div>
+        </div>
+
+        <div id="arguments-journal-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         ВКЛАДКА 4: СТУДИЯ СРАВНЕНИЯ ПРОФИЛЕЙ 360° (COMPARE STUDIO)
+         ======================================================================= -->
+    <section id="sec-compare" class="hidden space-y-6">
+      <div class="bento-card p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#471224]/10 pb-5">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-widest text-[#471224]/55">Аналитическое сопоставление Canalytics</span>
+            <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-[#471224] mt-1">Студия сравнения профилей 360°</h2>
+          </div>
+          <div class="seg-pill-group self-start md:self-auto">
+            <button onclick="setCompareMode('teacher')" id="cmp-mode-teacher" class="seg-pill-btn active">Сравнить учителей</button>
+            <button onclick="setCompareMode('student')" id="cmp-mode-student" class="seg-pill-btn">Сравнить учеников</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-5 space-y-4">
+            <div class="p-4 rounded-2xl bg-[#fef0d5]/50 border border-[#471224]/10 space-y-1.5">
+              <label class="text-xs font-bold uppercase text-[#471224]/70">Профиль А (Основной контур):</label>
+              <select id="compare-select-a" onchange="renderCompareStudio()" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#471224]/15 text-xs font-semibold text-[#471224]"></select>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-[#fef0d5]/50 border border-[#471224]/10 space-y-1.5">
+              <label class="text-xs font-bold uppercase text-[#471224]/70">Профиль Б (Сравниваемый контур):</label>
+              <select id="compare-select-b" onchange="renderCompareStudio()" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#471224]/15 text-xs font-semibold text-[#471224]"></select>
+            </div>
+
+            <div id="compare-delta-cards" class="space-y-2.5 pt-2"></div>
+          </div>
+
+          <div class="lg:col-span-7 flex flex-col items-center">
+            <div class="w-full max-w-md aspect-square">
+              <canvas id="compareRadarCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         ВКЛАДКА 5: МАТРИЦА ПРАВ (RBAC) И ЖУРНАЛ БЕЗОПАСНОСТИ
+         ======================================================================= -->
+    <section id="sec-rbac" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="lg:col-span-7 bento-card p-6 sm:p-8 space-y-5">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-widest text-[#471224]/55">Архитектура разграничения прав доступа</span>
+            <h2 class="font-serif-display text-2xl font-bold text-[#471224] mt-1">Спецификация RBAC (Ученик • Учитель • Директор)</h2>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-[#471224]/15 text-[#471224]/60 uppercase">
+                  <th class="py-3 pr-3">Операция в системе Canalytics</th>
+                  <th class="py-3 px-3 text-center">Ученик</th>
+                  <th class="py-3 px-3 text-center">Учитель</th>
+                  <th class="py-3 pl-3 text-center">Директор</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#471224]/10 font-medium">
+                <tr>
+                  <td class="py-3 pr-3">Анонимная оценка урока учителя (3 шкалы)</td>
+                  <td class="py-3 px-3 text-center text-emerald-700 font-bold">Разрешено</td>
+                  <td class="py-3 px-3 text-center text-rose-700">Блок (Конфликт интересов)</td>
+                  <td class="py-3 pl-3 text-center text-emerald-700 font-bold">Аудит урока</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-3">Выставление учительской оценки ученику</td>
+                  <td class="py-3 px-3 text-center text-amber-800">Peer-to-Peer (Кроме себя)</td>
+                  <td class="py-3 px-3 text-center text-emerald-700 font-bold">Полный доступ</td>
+                  <td class="py-3 pl-3 text-center text-emerald-700 font-bold">Полный доступ</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-3">Официальный ответ на аргумент класса</td>
+                  <td class="py-3 px-3 text-center text-rose-700">Запрещено</td>
+                  <td class="py-3 px-3 text-center text-emerald-700 font-bold">Разрешено</td>
+                  <td class="py-3 pl-3 text-center text-emerald-700 font-bold">Разрешено</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-3">Управление протоколами при X &lt; 5.0</td>
+                  <td class="py-3 px-3 text-center text-rose-700">Только чтение</td>
+                  <td class="py-3 px-3 text-center text-rose-700">Только чтение</td>
+                  <td class="py-3 pl-3 text-center text-emerald-700 font-bold">Root-управление</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 bento-card p-6 sm:p-8 space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-widest text-[#471224]/55">Лог безопасности</span>
+              <h3 class="font-serif-display text-2xl font-bold text-[#471224] mt-1">Журнал событий RBAC</h3>
+            </div>
+            <button onclick="resetSystemData()" class="px-3.5 py-1.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+              Сброс демо
+            </button>
+          </div>
+
+          <div id="rbac-audit-feed" class="space-y-2.5 max-h-80 overflow-y-auto pr-1 text-xs font-mono-code"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       МОДАЛЬНОЕ ОКНО 1: ОЦЕНИВАНИЕ (3 ШКАЛЫ + БЛОКИРАТОР АРГУМЕНТАЦИИ X < 5)
+       ========================================================================= -->
+  <div id="eval-modal" class="fixed inset-0 z-50 bg-[#471224]/55 backdrop-blur-sm hidden items-end sm:items-center justify-center sm:p-4">
+    <div class="modal-sheet p-6 sm:p-8 relative">
+      <button onclick="closeEvalModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-[#fef0d5] text-[#471224] flex items-center justify-center hover:bg-[#471224] hover:text-white transition">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <div class="space-y-1 mb-4 pr-10">
+        <span id="eval-modal-role-tag" class="text-xs font-semibold uppercase tracking-widest text-[#471224]/55">Оценивание</span>
+        <h3 id="eval-modal-name" class="font-serif-display text-2xl font-bold text-[#471224]">Имя</h3>
+      </div>
+
+      <!-- Быстрые пресеты для удобной демонстрации -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button type="button" onclick="applyEvalPreset(9, 9, 9)" class="px-3 py-1.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold">
+          Высокая оценка (X = 9.0)
+        </button>
+        <button type="button" onclick="applyEvalPreset(3, 4, 3)" class="px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold">
+          Низкая оценка (X = 3.3 • Блокировка без аргумента)
+        </button>
+      </div>
+
+      <!-- 3 шкалы от 1 до 10 -->
+      <div class="space-y-4 bg-[#fef0d5]/45 p-5 rounded-3xl mb-5">
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1.5">
+            <span id="eval-lbl-1">1. Объяснение материала (1–10)</span>
+            <span id="eval-val-1" class="font-mono-code font-bold">9 / 10</span>
+          </div>
+          <input id="eval-rng-1" type="range" min="1" max="10" value="9" class="apple-slider" oninput="recalcEvalModal()" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1.5">
+            <span id="eval-lbl-2">2. Дисциплина и справедливость (1–10)</span>
+            <span id="eval-val-2" class="font-mono-code font-bold">9 / 10</span>
+          </div>
+          <input id="eval-rng-2" type="range" min="1" max="10" value="9" class="apple-slider" oninput="recalcEvalModal()" />
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-semibold mb-1.5">
+            <span id="eval-lbl-3">3. Свобода идей и диалог (1–10)</span>
+            <span id="eval-val-3" class="font-mono-code font-bold">9 / 10</span>
+          </div>
+          <input id="eval-rng-3" type="range" min="1" max="10" value="9" class="apple-slider" oninput="recalcEvalModal()" />
+        </div>
+
+        <div id="eval-status-banner" class="p-3.5 rounded-2xl bg-emerald-50 text-emerald-900 text-xs font-bold flex items-center justify-between">
+          <span id="eval-x-formula">X = (9 + 9 + 9) / 3 = 9.0</span>
+          <span id="eval-x-verdict">X ≥ 5.0: Всё в норме</span>
+        </div>
+      </div>
+
+      <!-- Выбор ключевого фактора -->
+      <div class="mb-5">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-[#471224]/60 mb-2">Укажите ключевой фактор:</label>
+        <div id="eval-factors-box" class="flex flex-wrap gap-2">
+          <span onclick="selectFactorChip(this)" class="factor-chip active">Объективность и порядок</span>
+          <span onclick="selectFactorChip(this)" class="factor-chip">Человеческий фактор</span>
+          <span onclick="selectFactorChip(this)" class="factor-chip">Выделение любимчиков</span>
+          <span onclick="selectFactorChip(this)" class="factor-chip">Игнорирование идей</span>
+        </div>
+      </div>
+
+      <!-- Поле обязательной аргументации + ИИ-фильтр -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-xs font-semibold uppercase tracking-wider text-[#471224]">Аргументация (обязательно при X &lt; 5.0)</label>
+          <span id="eval-char-count" class="text-[11px] font-mono-code font-semibold text-[#471224]/60">0 / 25 симв.</span>
+        </div>
+        <textarea
+          id="eval-arg-text"
+          rows="3"
+          oninput="recalcEvalModal()"
+          placeholder="Опишите конкретные факты: что помогло понять тему или что именно вызвало трудности..."
+          class="w-full rounded-2xl bg-[#fef0d5]/40 border border-[#471224]/15 p-3.5 text-sm text-[#471224] placeholder-[#471224]/40 focus:outline-none focus:border-[#471224]"
+        ></textarea>
+
+        <div class="flex justify-between items-center mt-2 text-xs">
+          <button type="button" onclick="insertToxicSample()" class="text-[#471224]/65 underline">Тест резкой фразы</button>
+          <button type="button" onclick="rewriteWithAi()" class="font-semibold text-[#471224] underline">Сформулировать вежливо (ИИ)</button>
+        </div>
+
+        <div id="eval-ai-alert" class="hidden mt-3 p-4 rounded-2xl bg-[#fef0d5] border border-[#471224]/20 space-y-2">
+          <div class="text-xs font-bold text-[#471224]">ИИ-фильтр конструктивности Canalytics</div>
+          <p class="text-xs text-[#471224]/80">
+            Эмоциональные оскорбления заблокированы. Давайте переведем отзыв в конкретную учебную рекомендацию.
+          </p>
+          <button type="button" onclick="rewriteWithAi()" class="px-4 py-2 rounded-full bg-[#471224] text-white text-xs font-semibold">
+            Заменить на корректный аргумент
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-4 border-t border-[#471224]/10">
+        <span class="text-xs text-[#471224]/60">Верифицировано RBAC-протоколом</span>
+        <button id="eval-submit-btn" onclick="submitEvaluation()" class="px-7 py-3.5 rounded-full bg-[#471224] text-white text-xs font-semibold hover:bg-[#5e1830] transition">
+          Сохранить оценку
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       МОДАЛЬНОЕ ОКНО 2: ПЕРСОНАЛЬНОЕ ДОСЬЕ 360° (ПАСПОРТ + ПЕЧАТЬ PDF)
+       ========================================================================= -->
+  <div id="dossier-modal" class="fixed inset-0 z-50 bg-[#471224]/55 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-3xl my-8">
+      <div class="flex items-center justify-between mb-3 px-2">
+        <span class="text-xs font-semibold text-[#fef0d5]">Официальное аналитическое досье Canalytics 360°</span>
+        <div class="flex gap-2">
+          <button onclick="window.print()" class="px-4 py-2 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold flex items-center gap-1.5">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i> Печать / PDF
+          </button>
+          <button onclick="closeDossierModal()" class="w-9 h-9 rounded-full bg-white/15 text-white flex items-center justify-center">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="printable-dossier" class="bg-[#fef0d5] p-6 sm:p-10 rounded-[32px] border-2 border-[#471224] shadow-2xl">
+        <div class="bg-white rounded-[24px] p-6 sm:p-8 border border-[#471224]/15 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#471224]/10 pb-5">
+            <div class="flex items-center gap-3.5">
+              <div class="w-12 h-12 rounded-2xl bg-[#471224] text-[#fef0d5] flex items-center justify-center font-serif-display font-bold text-2xl overflow-hidden">
+                <img src="logo.png" alt="Logo" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.textContent='C';" />
+              </div>
+              <div>
+                <div class="text-[10px] uppercase tracking-widest text-[#471224]/55 font-semibold" id="dossier-type-label">Canalytics 360° Dossier</div>
+                <h2 class="font-serif-display text-2xl font-bold text-[#471224]" id="dossier-title-name">Имя</h2>
+              </div>
+            </div>
+            <div class="text-left sm:text-right">
+              <span id="dossier-x-badge" class="px-3.5 py-1.5 rounded-full bg-[#471224] text-[#fef0d5] font-mono-code text-sm font-bold">X = 9.2</span>
+              <div id="dossier-status-text" class="text-xs font-semibold text-emerald-800 mt-1">Статус нормы (X ≥ 5.0)</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div class="max-w-[260px] mx-auto aspect-square w-full">
+              <canvas id="dossierRadarCanvas"></canvas>
+            </div>
+            <div class="h-56 w-full">
+              <canvas id="dossierTrendCanvas"></canvas>
+            </div>
+          </div>
+
+          <div id="dossier-metrics-row" class="grid grid-cols-3 gap-3 text-center"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       МОДАЛЬНОЕ ОКНО 3: SPOTLIGHT ПОИСК (CMD + K)
+       ========================================================================= -->
+  <div id="spotlight-modal" class="fixed inset-0 z-50 bg-[#471224]/55 backdrop-blur-sm hidden items-start justify-center p-4 pt-20">
+    <div class="bento-card w-full max-w-xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center gap-3 border-b border-[#471224]/10 pb-3">
+        <i data-lucide="search" class="w-5 h-5 text-[#471224]"></i>
+        <input
+          id="spotlight-input"
+          type="text"
+          oninput="renderSpotlightResults(this.value)"
+          placeholder="Быстрый поиск учителя, ученика или раздела Canalytics..."
+          class="w-full text-sm text-[#471224] placeholder-[#471224]/45 focus:outline-none bg-transparent"
+        />
+        <button onclick="closeSpotlight()" class="text-xs font-semibold text-[#471224]/60 px-2 py-1 rounded bg-[#fef0d5]">ESC</button>
+      </div>
+      <div id="spotlight-results" class="space-y-1.5 max-h-72 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- Уведомления (Toast) -->
+  <div id="toast-container" class="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
+
+  <!-- =========================================================================
+       JAVASCRIPT: ЯДРО CANALYTICS, RBAC И ГРАФИКИ
+       ========================================================================= -->
+  <script>
+    // Автоматический подбор расширения для твоего файла logo (logo.png, logo.svg, logo.jpg, logo.webp)
+    const logoExtensions = ['logo.png', 'logo.svg', 'logo.jpg', 'logo.jpeg', 'logo.webp'];
+    let logoTryIndex = 0;
+
+    function handleLogoFallback(imgEl) {
+      logoTryIndex++;
+      if (logoTryIndex < logoExtensions.length) {
+        imgEl.src = logoExtensions[logoTryIndex];
+      } else {
+        imgEl.classList.add('hidden');
+        const fallback = document.getElementById('brand-logo-fallback');
+        if (fallback) fallback.classList.remove('hidden');
+      }
+    }
+
+    const STORAGE_KEY = 'canalytics_360_v1';
+
+    const initialData = {
+      role: 'student',
+      teacherZoneFilter: 'all',
+      studentZoneFilter: 'all',
+      argFilter: 'all',
+      compareMode: 'teacher',
+      teachers: [
+        { id: 1, name: 'Соколов Алексей Викторович', initials: 'АС', dept: 'stem', subject: 'Физика и Инженерия (9–11 кл.)', explain: 9.6, discipline: 9.2, freedom: 9.5, count: 64, history: [9.1, 9.3, 9.4, 9.5, 9.4] },
+        { id: 2, name: 'Волкова Елена Сергеевна', initials: 'ЕВ', dept: 'stem', subject: 'Алгебра и Мат. анализ (9–11 кл.)', explain: 9.4, discipline: 9.3, freedom: 9.0, count: 58, history: [9.0, 9.1, 9.2, 9.2, 9.2] },
+        { id: 3, name: 'Алиев Тимур Рустамович', initials: 'ТА', dept: 'stem', subject: 'Информатика и Архитектура ПО (8–11 кл.)', explain: 9.8, discipline: 9.5, freedom: 9.9, count: 82, history: [9.5, 9.6, 9.7, 9.7, 9.7] },
+        { id: 4, name: 'Орлова Мария Дмитриевна', initials: 'МО', dept: 'hum', subject: 'Английский язык и Риторика (8–10 кл.)', explain: 9.3, discipline: 9.0, freedom: 9.6, count: 49, history: [9.0, 9.1, 9.2, 9.3, 9.3] },
+        { id: 5, name: 'Каримова Дильноза Рустамовна', initials: 'ДК', dept: 'hum', subject: 'История и Обществознание (8–11 кл.)', explain: 9.1, discipline: 9.2, freedom: 9.3, count: 44, history: [8.8, 9.0, 9.1, 9.1, 9.2] },
+        { id: 6, name: 'Юсупов Рустам Камилович', initials: 'РЮ', dept: 'stem', subject: 'Робототехника и 3D-моделирование (8–9 кл.)', explain: 9.5, discipline: 9.1, freedom: 9.7, count: 51, history: [9.2, 9.3, 9.4, 9.4, 9.4] },
+        { id: 7, name: 'Белова Наталья Игоревна', initials: 'НБ', dept: 'nat', subject: 'Биология и Экология (8–10 кл.)', explain: 8.9, discipline: 9.0, freedom: 9.1, count: 39, history: [8.7, 8.8, 8.9, 9.0, 9.0] },
+        { id: 8, name: 'Садыкова Лола Тимуровна', initials: 'ЛС', dept: 'hum', subject: 'Литература и Мировая культура (9–11 кл.)', explain: 9.2, discipline: 8.9, freedom: 9.5, count: 41, history: [9.0, 9.1, 9.1, 9.2, 9.2] },
+        { id: 9, name: 'Громов Виктор Павлович', initials: 'ВГ', dept: 'nat', subject: 'Химия и Лабораторный анализ (8–9 кл.)', explain: 4.1, discipline: 4.5, freedom: 3.7, count: 34, history: [5.4, 4.9, 4.5, 4.2, 4.1], protocolStatus: 'На контроле: Беседа с директором' },
+        { id: 10, name: 'Ибрагимов Фархад Азизович', initials: 'ФИ', dept: 'nat', subject: 'Экономическая география (9–10 кл.)', explain: 4.4, discipline: 4.7, freedom: 4.1, count: 27, history: [5.2, 4.8, 4.6, 4.5, 4.4], protocolStatus: 'На контроле: Методическая встреча' },
+        { id: 11, name: 'Ларин Игорь Станиславович', initials: 'ИЛ', dept: 'stem', subject: 'Черчение и Начертательная геометрия (8 кл.)', explain: 1.8, discipline: 2.0, freedom: 1.6, count: 29, history: [3.2, 2.6, 2.1, 1.9, 1.8], protocolStatus: 'Критический: Открытый урок с директором' },
+        { id: 12, name: 'Холматов Сардор Бахтиярович', initials: 'СХ', dept: 'hum', subject: 'Основы права (10–11 кл.)', explain: 8.7, discipline: 8.9, freedom: 8.8, count: 31, history: [8.5, 8.6, 8.7, 8.8, 8.8] }
+      ],
+      students: [
+        { id: 101, name: 'Басиров Айдар', initials: 'АБ', grade: '9', klass: '9 «Инженерный»', explain: 9.5, discipline: 9.2, freedom: 9.6, history: [9.0, 9.2, 9.3, 9.4, 9.4] },
+        { id: 102, name: 'Шмарин Марсель', initials: 'МШ', grade: '9', klass: '9 «Инженерный»', explain: 9.4, discipline: 9.1, freedom: 9.5, history: [8.9, 9.1, 9.2, 9.3, 9.3] },
+        { id: 103, name: 'Алимова Диера', initials: 'ДА', grade: '9', klass: '9 «Инженерный»', explain: 9.6, discipline: 9.5, freedom: 9.4, history: [9.2, 9.3, 9.4, 9.5, 9.5] },
+        { id: 104, name: 'Валиева Милана', initials: 'МВ', grade: '9', klass: '9 «А» класс', explain: 9.1, discipline: 9.3, freedom: 9.2, history: [8.8, 9.0, 9.1, 9.2, 9.2] },
+        { id: 105, name: 'Алимов Мурад', initials: 'МА', grade: '8', klass: '8 «Инженерный»', explain: 9.2, discipline: 9.0, freedom: 9.3, history: [8.9, 9.0, 9.1, 9.1, 9.2] },
+        { id: 106, name: 'Касымов Данияр', initials: 'ДК', grade: '8', klass: '8 «Б» класс', explain: 8.8, discipline: 8.9, freedom: 8.7, history: [8.5, 8.6, 8.7, 8.8, 8.8] },
+        { id: 107, name: 'Каримов Руслан', initials: 'РК', grade: '8', klass: '8 «Инженерный»', explain: 4.1, discipline: 4.3, freedom: 4.2, history: [5.5, 4.9, 4.5, 4.3, 4.2], protocolStatus: 'Предупреждение куратора' },
+        { id: 108, name: 'Морозов Денис', initials: 'ДМ', grade: '8', klass: '8 «Б» класс', explain: 1.7, discipline: 1.8, freedom: 1.9, history: [3.1, 2.5, 2.1, 1.9, 1.8], protocolStatus: 'Вызов на беседу с директором' },
+        { id: 109, name: 'Рахимова Амина', initials: 'АР', grade: '10', klass: '10 «Инженерный»', explain: 9.4, discipline: 9.5, freedom: 9.3, history: [9.1, 9.2, 9.3, 9.4, 9.4] },
+        { id: 110, name: 'Турсунов Бобур', initials: 'БТ', grade: '10', klass: '10 «А» класс', explain: 4.3, discipline: 4.1, freedom: 4.5, history: [5.2, 4.8, 4.5, 4.4, 4.3], protocolStatus: 'Предупреждение по дедлайнам' },
+        { id: 111, name: 'Назарова Камила', initials: 'КН', grade: '11', klass: '11 «Инженерный»', explain: 9.7, discipline: 9.6, freedom: 9.5, history: [9.4, 9.5, 9.6, 9.6, 9.6] },
+        { id: 112, name: 'Пак Артур', initials: 'АП', grade: '11', klass: '11 «Инженерный»', explain: 9.3, discipline: 9.4, freedom: 9.2, history: [9.0, 9.1, 9.2, 9.3, 9.3] }
+      ],
+      argumentsFeed: [
+        { id: 'arg1', target: 'Громов Виктор Павлович (Химия)', author: '9 «Инженерный» класс', x: 4.1, factor: 'Игнорирование идей', text: 'На уроке по окислительно-восстановительным реакциям 5 учеников подняли руку для разбора расстановки коэффициентов, но класс сразу перешел к контрольному тесту. Просим выделить 10 минут на практику у доски.', reply: '' },
+        { id: 'arg2', target: 'Ларин Игорь Станиславович (Черчение)', author: '8 «Инженерный» класс', x: 1.8, factor: 'Выделение любимчиков', text: 'Критерии оценивания графических работ не были озвучены заранее, из-за чего у большинства учеников снижены оценки за оформление рамки. Просим закрепить единый шаблон критериев.', reply: 'Принято в работу: чек-лист критериев опубликован в кабинете.' },
+        { id: 'arg3', target: 'Соколов Алексей Викторович (Физика)', author: '9 «Инженерный» класс', x: 9.4, factor: 'Объективность и порядок', text: 'Практическая демонстрация закона сохранения импульса помогла всему классу сразу понять тему без зубрежки.', reply: 'Благодарю 9 «Инженерный» за отличную работу на практикуме!' },
+        { id: 'arg4', target: 'Алиев Тимур Рустамович (Информатика)', author: '9 «Инженерный» класс', x: 9.7, factor: 'Объективность и порядок', text: 'Разбор архитектуры веб-приложений и помощь каждому проекту дали огромный прогресс всей группе.', reply: '' }
+      ],
+      auditLogs: [
+        { time: '16:40', role: 'SYSTEM', action: 'Инициализирована матрица безопасности Canalytics RBAC 360°' },
+        { time: '16:42', role: 'STUDENT', action: 'Сессия активирована: Басиров Айдар (9 «Инженерный» класс)' }
+      ]
+    };
+
+    let state = loadState();
+    let activeEvalTarget = { type: 'teacher', id: 1 };
+    let parallelChart = null;
+    let compareChart = null;
+    let dossierRadar = null;
+    let dossierTrend = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return Object.assign({}, JSON.parse(JSON.stringify(initialData)), JSON.parse(raw));
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(initialData));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function logRbacEvent(actionText) {
+      const now = new Date();
+      const timeStr = now.toTimeString().slice(0, 5);
+      state.auditLogs.unshift({
+        time: timeStr,
+        role: state.role.toUpperCase(),
+        action: actionText
+      });
+      saveState();
+      renderRbacAudit();
+    }
+
+    function calcX(item) {
+      return Number(((item.explain + item.discipline + item.freedom) / 3).toFixed(1));
+    }
+
+    function getZoneMeta(xVal, isTeacher = true) {
+      const x = Number(xVal);
+      if (x >= 5.0) {
+        return {
+          zone: 'norm',
+          badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-500/25',
+          formula: 'X ≥ 5.0',
+          statusText: 'Всё в норме'
+        };
+      } else if (x > 2.0) {
+        return {
+          zone: 'warn',
+          badgeClass: 'bg-amber-50 text-amber-900 border-amber-500/30',
+          formula: '2 < X < 5',
+          statusText: isTeacher ? 'Беседа с директором' : 'Предупреждение'
+        };
+      } else {
+        return {
+          zone: 'crit',
+          badgeClass: 'bg-rose-50 text-rose-900 border-rose-500/30',
+          formula: '0 ≤ X ≤ 2',
+          statusText: isTeacher ? 'Присутствие дир. / Открытый урок' : 'Беседа с директором'
+        };
+      }
+    }
+
+    // =========================================================================
+    // ПЕРЕКЛЮЧЕНИЕ РОЛЕЙ И ПЕРЕСЧЕТ ПРАВ ДОСТУПА (RBAC)
+    // =========================================================================
+    function setRole(newRole) {
+      state.role = newRole;
+      ['student', 'teacher', 'director'].forEach(r => {
+        const btn = document.getElementById(`role-btn-${r}`);
+        if (btn) btn.classList.toggle('active', r === newRole);
+      });
+
+      logRbacEvent(`Переключен режим доступа на роль: ${newRole.toUpperCase()}`);
+      renderAll();
+      showToast(`Активна роль: ${newRole === 'student' ? 'Ученик (Айдар Басиров)' : (newRole === 'teacher' ? 'Учитель (Соколов А.В.)' : 'Директор школы (Root)')}`);
+    }
+
+    function renderRoleBanner() {
+      const badge = document.getElementById('rbac-identity-badge');
+      const clearance = document.getElementById('rbac-clearance-pill');
+      const heading = document.getElementById('rbac-hero-heading');
+      const desc = document.getElementById('rbac-hero-desc');
+      const actions = document.getElementById('rbac-quick-actions');
+      const perms = document.getElementById('rbac-permissions-list');
+      const matrixHint = document.getElementById('matrix-rbac-hint');
+
+      if (state.role === 'student') {
+        badge.textContent = 'Сессия: Ученик • Айдар Басиров (9 «Инженерный» класс)';
+        clearance.textContent = 'RBAC LEVEL 1 • STUDENT';
+        heading.textContent = 'Оценивайте качество проведения уроков и поддерживайте одноклассников';
+        desc.textContent = 'В режиме ученика ваши оценки учителям полностью анонимны. Оценка ниже 5.0 требует обязательной аргументации, проверяемой ИИ-фильтром. Изменение учительских баллов одноклассников и управление директорскими протоколами заблокированы.';
+        if (matrixHint) matrixHint.textContent = 'Режим чтения (Управление протоколами доступно только Директору)';
+
+        actions.innerHTML = `
+          <button onclick="openDossierModal('student', 101)" class="px-5 py-2.5 rounded-full bg-[#471224] text-[#fef0d5] text-xs font-semibold hover:bg-[#5e1830] transition">
+            Мой паспорт 360° (Айдар Басиров)
+          </button>
+          <button onclick="openEvalModal('teacher', 1)" class="px-5 py-2.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+            Оценить проведенный урок
+          </button>
+          <button onclick="switchTab('compare')" class="px-5 py-2.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+            Сравнить профили 360°
+          </button>
+        `;
+
+        perms.innerHTML = `
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Анонимное оценивание 12 учителей по 3 шкалам</span></div>
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Peer-to-Peer поддержка одноклассников (кроме себя)</span></div>
+          <div class="flex items-center gap-2 text-rose-800/70 line-through"><span>✕</span><span>Выставление учительских оценок ученикам</span></div>
+          <div class="flex items-center gap-2 text-rose-800/70 line-through"><span>✕</span><span>Закрытие директорских протоколов X &lt; 5 (только чтение)</span></div>
+        `;
+      } else if (state.role === 'teacher') {
+        badge.textContent = 'Сессия: Учитель • Соколов Алексей Викторович (Физика и Инженерия)';
+        clearance.textContent = 'RBAC LEVEL 2 • TEACHER';
+        heading.textContent = 'Оценивайте вовлеченность учеников и отвечайте на аргументы классов';
+        desc.textContent = 'В режиме учителя вам открыто полное оценивание учеников 8–11 классов по 3 шкалам и публикация официальных ответов на отзывы. Оценивание собственной анкеты и коллег-учителей заблокировано защитой от конфликта интересов.';
+        if (matrixHint) matrixHint.textContent = 'Режим учителя (Вы можете отвечать на аргументы в журнале ниже)';
+
+        actions.innerHTML = `
+          <button onclick="openDossierModal('teacher', 1)" class="px-5 py-2.5 rounded-full bg-[#471224] text-[#fef0d5] text-xs font-semibold hover:bg-[#5e1830] transition">
+            Моё досье преподавателя
+          </button>
+          <button onclick="switchTab('students')" class="px-5 py-2.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+            Оценить учеников (8–11 кл.)
+          </button>
+          <button onclick="switchTab('matrix')" class="px-5 py-2.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+            Ответить на аргументы классов
+          </button>
+        `;
+
+        perms.innerHTML = `
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Оценивание всех учеников и корректировка индекса X</span></div>
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Публикация официальных ответов на аргументы учеников</span></div>
+          <div class="flex items-center gap-2 text-rose-800/70 line-through"><span>✕</span><span>Самооценка и оценка коллег-учителей (Конфликт интересов)</span></div>
+          <div class="flex items-center gap-2 text-rose-800/70 line-through"><span>✕</span><span>Снятие директорских протоколов контроля X &lt; 5</span></div>
+        `;
+      } else {
+        badge.textContent = 'Сессия: Директор школы • Root-доступ к матрице качества';
+        clearance.textContent = 'RBAC LEVEL 3 • DIRECTOR ROOT';
+        heading.textContent = 'Управляйте протоколами контроля X < 5 и проводите аудит школы 360°';
+        desc.textContent = 'В режиме директора разблокированы все административные функции: назначение методических бесед при X < 5, проведение открытых уроков при 0 ≤ X ≤ 2, снятие предупреждений после разбора и аудит любого профиля.';
+        if (matrixHint) matrixHint.textContent = 'Root-доступ активен: вы можете назначать встречи и закрывать протоколы X < 5';
+
+        actions.innerHTML = `
+          <button onclick="switchTab('matrix')" class="px-5 py-2.5 rounded-full bg-[#471224] text-[#fef0d5] text-xs font-semibold hover:bg-[#5e1830] transition">
+            Управление протоколами X &lt; 5
+          </button>
+          <button onclick="switchTab('compare')" class="px-5 py-2.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+            Сравнить показатели кафедр
+          </button>
+          <button onclick="switchTab('rbac')" class="px-5 py-2.5 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+            Инспектор RBAC и Логи
+          </button>
+        `;
+
+        perms.innerHTML = `
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Назначение бесед и открытых уроков при X &lt; 5.0 и X ≤ 2.0</span></div>
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Закрытие протоколов контроля и нормализация индекса X</span></div>
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Директорский аудит любого учителя и ученика школы</span></div>
+          <div class="flex items-center gap-2 text-emerald-800 font-semibold"><span>✓</span><span>Модерация журнала аргументации и сброс системы</span></div>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // ОТРИСОВКА КАРТОЧЕК УЧИТЕЛЕЙ С УЧЕТОМ ПРАВ ДОСТУПА (RBAC)
+    // =========================================================================
+    function setTeacherZoneFilter(z) {
+      state.teacherZoneFilter = z;
+      ['all', 'norm', 'warn', 'crit'].forEach(k => {
+        const btn = document.getElementById(`tz-${k}`);
+        if (btn) btn.classList.toggle('active', k === z);
+      });
+      renderTeachers();
+    }
+
+    function renderTeachers() {
+      const grid = document.getElementById('teachers-cards-grid');
+      if (!grid) return;
+
+      const q = (document.getElementById('teacher-search-input')?.value || '').toLowerCase().trim();
+      const dept = document.getElementById('teacher-dept-select')?.value || 'all';
+
+      const list = state.teachers.filter(t => {
+        const x = calcX(t);
+        const meta = getZoneMeta(x, true);
+        const matchZone = state.teacherZoneFilter === 'all' || meta.zone === state.teacherZoneFilter;
+        const matchDept = dept === 'all' || t.dept === dept;
+        const matchQ = !q || t.name.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q);
+        return matchZone && matchDept && matchQ;
+      });
+
+      grid.innerHTML = list.map(t => {
+        const x = calcX(t);
+        const meta = getZoneMeta(x, true);
+
+        let actionButtonHtml = '';
+        if (state.role === 'student') {
+          actionButtonHtml = `
+            <button onclick="openEvalModal('teacher', ${t.id})" class="px-4 py-2 rounded-full bg-[#471224] text-white text-xs font-semibold hover:bg-[#5e1830] transition">
+              Оценить урок
+            </button>
+          `;
+        } else if (state.role === 'teacher') {
+          actionButtonHtml = `
+            <button disabled title="В режиме учителя оценка коллег и себя заблокирована" class="px-3.5 py-2 rounded-full text-[11px] font-semibold rbac-locked">
+              ${t.id === 1 ? 'Ваш профиль (RBAC)' : 'Коллега (Только чтение)'}
+            </button>
+          `;
+        } else {
+          actionButtonHtml = `
+            <button onclick="openEvalModal('teacher', ${t.id})" class="px-4 py-2 rounded-full bg-[#471224] text-[#fef0d5] text-xs font-semibold hover:bg-[#5e1830] transition">
+              Аудит директора
+            </button>
+          `;
+        }
+
+        return `
+          <div class="bento-card bento-hover p-6 flex flex-col justify-between space-y-5">
+            <div class="space-y-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 rounded-2xl bg-[#471224] text-[#fef0d5] flex items-center justify-center font-serif-display font-bold text-sm shrink-0">
+                    ${t.initials}
+                  </div>
+                  <div>
+                    <span class="text-[11px] font-semibold text-[#471224]/55 block">${t.subject}</span>
+                    <h3 class="font-serif-display text-lg font-bold text-[#471224] leading-snug">${t.name}</h3>
+                  </div>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-[#fef0d5] text-[#471224] font-mono-code text-xs font-bold shrink-0">
+                  X = ${x.toFixed(1)}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-3 py-1 rounded-full text-[11px] font-semibold border ${meta.badgeClass}">
+                  ${meta.formula} • ${meta.statusText}
+                </span>
+                <span class="text-[11px] text-[#471224]/55">${t.count} оценок</span>
+              </div>
+
+              <div class="space-y-2 pt-1 text-xs">
+                <div>
+                  <div class="flex justify-between text-[11px] font-medium mb-1">
+                    <span>Объяснение материала</span>
+                    <span class="font-mono-code font-semibold">${t.explain.toFixed(1)}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-[#fef0d5] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#471224] rounded-full" style="width: ${t.explain * 10}%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[11px] font-medium mb-1">
+                    <span>Дисциплина и строгость</span>
+                    <span class="font-mono-code font-semibold">${t.discipline.toFixed(1)}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-[#fef0d5] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#471224] rounded-full" style="width: ${t.discipline * 10}%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[11px] font-medium mb-1">
+                    <span>Свобода идей и диалог</span>
+                    <span class="font-mono-code font-semibold">${t.freedom.toFixed(1)}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-[#fef0d5] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#471224] rounded-full" style="width: ${t.freedom * 10}%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-[#471224]/10 flex items-center justify-between gap-2">
+              <button onclick="openDossierModal('teacher', ${t.id})" class="px-3.5 py-2 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+                Досье 360°
+              </button>
+              ${actionButtonHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // ОТРИСОВКА КАРТОЧЕК УЧЕНИКОВ С УЧЕТОМ ПРАВ ДОСТУПА (RBAC)
+    // =========================================================================
+    function setStudentZoneFilter(z) {
+      state.studentZoneFilter = z;
+      ['all', 'norm', 'low'].forEach(k => {
+        const btn = document.getElementById(`sz-${k}`);
+        if (btn) btn.classList.toggle('active', k === z);
+      });
+      renderStudents();
+    }
+
+    function renderStudents() {
+      const grid = document.getElementById('students-cards-grid');
+      if (!grid) return;
+
+      const q = (document.getElementById('student-search-input')?.value || '').toLowerCase().trim();
+      const grade = document.getElementById('student-grade-select')?.value || 'all';
+
+      const list = state.students.filter(s => {
+        const x = calcX(s);
+        const matchZone = state.studentZoneFilter === 'all'
+          || (state.studentZoneFilter === 'norm' && x >= 5.0)
+          || (state.studentZoneFilter === 'low' && x < 5.0);
+        const matchGrade = grade === 'all' || s.grade === grade;
+        const matchQ = !q || s.name.toLowerCase().includes(q) || s.klass.toLowerCase().includes(q);
+        return matchZone && matchGrade && matchQ;
+      });
+
+      grid.innerHTML = list.map(s => {
+        const x = calcX(s);
+        const meta = getZoneMeta(x, false);
+
+        let actionHtml = '';
+        if (state.role === 'student') {
+          if (s.id === 101) {
+            actionHtml = `<button disabled class="px-3.5 py-2 rounded-full text-[11px] font-semibold rbac-locked">Это ваш профиль</button>`;
+          } else {
+            actionHtml = `
+              <button onclick="openEvalModal('student', ${s.id})" class="px-4 py-2 rounded-full bg-[#471224] text-white text-xs font-semibold hover:bg-[#5e1830] transition">
+                Peer-Оценка
+              </button>
+            `;
+          }
+        } else if (state.role === 'teacher') {
+          actionHtml = `
+            <div class="flex items-center gap-1.5">
+              <button onclick="quickAdjustStudent(${s.id}, 0.5)" title="Поощрить (+0.5)" class="px-2.5 py-1.5 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold">+0.5</button>
+              <button onclick="openEvalModal('student', ${s.id})" class="px-3.5 py-2 rounded-full bg-[#471224] text-white text-xs font-semibold">Оценить</button>
+            </div>
+          `;
+        } else {
+          actionHtml = `
+            <button onclick="openEvalModal('student', ${s.id})" class="px-4 py-2 rounded-full bg-[#471224] text-[#fef0d5] text-xs font-semibold">
+              Аудит директора
+            </button>
+          `;
+        }
+
+        return `
+          <div class="bento-card bento-hover p-6 flex flex-col justify-between space-y-5">
+            <div class="space-y-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 rounded-2xl bg-[#471224] text-[#fef0d5] flex items-center justify-center font-serif-display font-bold text-sm shrink-0">
+                    ${s.initials}
+                  </div>
+                  <div>
+                    <span class="text-[11px] font-semibold text-[#471224]/55 block">${s.klass}</span>
+                    <h3 class="font-serif-display text-lg font-bold text-[#471224] leading-snug">${s.name}</h3>
+                  </div>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-[#fef0d5] text-[#471224] font-mono-code text-xs font-bold shrink-0">
+                  X = ${x.toFixed(1)}
+                </span>
+              </div>
+
+              <span class="inline-block px-3 py-1 rounded-full text-[11px] font-semibold border ${meta.badgeClass}">
+                ${meta.formula} • ${meta.statusText}
+              </span>
+
+              <div class="space-y-2 pt-1 text-xs">
+                <div>
+                  <div class="flex justify-between text-[11px] font-medium mb-1">
+                    <span>Активность и понимание</span>
+                    <span class="font-mono-code font-semibold">${s.explain.toFixed(1)}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-[#fef0d5] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#471224] rounded-full" style="width: ${s.explain * 10}%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[11px] font-medium mb-1">
+                    <span>Дисциплина и дедлайны</span>
+                    <span class="font-mono-code font-semibold">${s.discipline.toFixed(1)}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-[#fef0d5] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#471224] rounded-full" style="width: ${s.discipline * 10}%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[11px] font-medium mb-1">
+                    <span>Инициатива и командность</span>
+                    <span class="font-mono-code font-semibold">${s.freedom.toFixed(1)}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-[#fef0d5] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#471224] rounded-full" style="width: ${s.freedom * 10}%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-[#471224]/10 flex items-center justify-between gap-2">
+              <button onclick="openDossierModal('student', ${s.id})" class="px-3.5 py-2 rounded-full bg-[#fef0d5] text-[#471224] text-xs font-semibold hover:bg-[#471224] hover:text-white transition">
+                Паспорт 360°
+              </button>
+              ${actionHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function quickAdjustStudent(studentId, delta) {
+      if (state.role === 'student') return;
+      const s = state.students.find(item => item.id === studentId);
+      if (!s) return;
+      s.explain = Math.min(10, Math.max(1, Number((s.explain + delta).toFixed(1))));
+      s.discipline = Math.min(10, Math.max(1, Number((s.discipline + delta).toFixed(1))));
+      s.freedom = Math.min(10, Math.max(1, Number((s.freedom + delta).toFixed(1))));
+      logRbacEvent(`Учитель скорректировал индекс ученика ${s.name} до X = ${calcX(s)}`);
+      renderAll();
+      showToast(`Индекс ${s.name} обновлен: X = ${calcX(s)}`);
+    }
+
+    // =========================================================================
+    // МАТРИЦА ПОРОГОВ X, ПРОТОКОЛЫ ДИРЕКТОРА И ЖУРНАЛ АРГУМЕНТОВ
+    // =========================================================================
+    function setFormulaSim(val) {
+      document.getElementById('sim-x-range').value = val;
+      updateFormulaSim(val);
+    }
+
+    function updateFormulaSim(val) {
+      const x = Number(val);
+      document.getElementById('sim-x-badge').textContent = `X = ${x.toFixed(1)}`;
+      const tMeta = getZoneMeta(x, true);
+      const sMeta = getZoneMeta(x, false);
+      document.getElementById('sim-teacher-out').textContent = `${tMeta.formula} • ${tMeta.statusText}`;
+      document.getElementById('sim-student-out').textContent = `${sMeta.formula} • ${sMeta.statusText}`;
+    }
+
+    function renderActiveProtocols() {
+      const container = document.getElementById('active-protocols-list');
+      if (!container) return;
+
+      const lowTeachers = state.teachers.filter(t => calcX(t) < 5.0).map(t => ({
+        type: 'teacher',
+        id: t.id,
+        roleLabel: 'Учитель',
+        name: t.name,
+        sub: t.subject,
+        x: calcX(t),
+        meta: getZoneMeta(calcX(t), true),
+        status: t.protocolStatus || 'Ожидает решения директора'
+      }));
+
+      const lowStudents = state.students.filter(s => calcX(s) < 5.0).map(s => ({
+        type: 'student',
+        id: s.id,
+        roleLabel: 'Ученик',
+        name: s.name,
+        sub: s.klass,
+        x: calcX(s),
+        meta: getZoneMeta(calcX(s), false),
+        status: s.protocolStatus || 'На контроле куратора'
+      }));
+
+      const combined = [...lowTeachers, ...lowStudents];
+      document.getElementById('kpi-alerts-count').textContent = combined.length;
+
+      if (combined.length === 0) {
+        container.innerHTML = `<div class="p-6 rounded-2xl bg-emerald-50 text-emerald-900 text-xs font-semibold">Все показатели школы находятся в зоне нормы (X ≥ 5.0). Активных протоколов нет.</div>`;
+        return;
+      }
+
+      container.innerHTML = combined.map(item => `
+        <div class="p-4 sm:p-5 rounded-2xl bg-[#fef0d5]/45 border border-[#471224]/12 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-[#471224] text-[#fef0d5] text-[10px] font-bold uppercase">${item.roleLabel}</span>
+              <h4 class="font-bold text-sm text-[#471224]">${item.name}</h4>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono-code font-bold border ${item.meta.badgeClass}">
+                X = ${item.x.toFixed(1)} (${item.meta.statusText})
+              </span>
+            </div>
+            <p class="text-xs text-[#471224]/65">${item.sub} • Статус: <strong>${item.status}</strong></p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            ${state.role === 'director'
+              ? `
+                <button onclick="resolveProtocolByDirector('${item.type}', ${item.id})" class="px-3.5 py-2 rounded-full bg-[#471224] text-white text-xs font-semibold hover:bg-[#5e1830] transition">
+                  Провести разбор и закрыть (X → 6.0)
+                </button>
+              `
+              : `
+                <button disabled class="px-3.5 py-2 rounded-full text-[11px] font-semibold rbac-locked">
+                  Только для Директора
+                </button>
+              `
+            }
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function resolveProtocolByDirector(type, id) {
+      if (state.role !== 'director') return;
+      const list = type === 'teacher' ? state.teachers : state.students;
+      const target = list.find(x => x.id === id);
+      if (!target) return;
+
+      target.explain = 6.2;
+      target.discipline = 6.0;
+      target.freedom = 6.1;
+      target.protocolStatus = 'Разбор проведен директором • Статус в норме';
+      logRbacEvent(`Директор провел методический разбор и закрыл протокол для: ${target.name}`);
+      renderAll();
+      showToast(`Протокол закрыт директором: ${target.name} переведен в зону нормы (X ≥ 5.0)`);
+    }
+
+    function setArgFilter(f) {
+      state.argFilter = f;
+      renderArgumentsJournal();
+    }
+
+    function renderArgumentsJournal() {
+      const grid = document.getElementById('arguments-journal-grid');
+      if (!grid) return;
+
+      const list = state.argumentsFeed.filter(a => state.argFilter === 'all' || a.factor === state.argFilter);
+
+      grid.innerHTML = list.map(a => `
+        <div class="p-5 rounded-2xl bg-[#fef0d5]/45 border border-[#471224]/12 flex flex-col justify-between space-y-3">
+          <div class="space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+              <span>${a.author} → ${a.target}</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-white text-[#471224] font-mono-code">X = ${a.x} • ${a.factor}</span>
+            </div>
+            <p class="text-xs sm:text-sm text-[#471224]/85 leading-relaxed">«${a.text}»</p>
+
+            ${a.reply
+              ? `<div class="p-3 rounded-xl bg-white border-l-4 border-[#471224] text-xs text-[#471224]">
+                   <strong>Официальный ответ:</strong> ${a.reply}
+                 </div>`
+              : ''
+            }
+          </div>
+
+          ${(state.role === 'teacher' || state.role === 'director') && !a.reply
+            ? `<div class="pt-2 flex gap-2">
+                 <input id="reply-input-${a.id}" type="text" placeholder="Написать официальный ответ..." class="flex-1 px-3 py-1.5 rounded-xl bg-white border border-[#471224]/15 text-xs" />
+                 <button onclick="postOfficialReply('${a.id}')" class="px-3.5 py-1.5 rounded-xl bg-[#471224] text-white text-xs font-semibold">Ответить</button>
+               </div>`
+            : ''
+          }
+        </div>
+      `).join('');
+    }
+
+    function postOfficialReply(argId) {
+      const input = document.getElementById(`reply-input-${argId}`);
+      if (!input || !input.value.trim()) return;
+      const item = state.argumentsFeed.find(a => a.id === argId);
+      if (!item) return;
+      item.reply = input.value.trim();
+      logRbacEvent(`Опубликован официальный ответ на аргумент #${argId}`);
+      renderArgumentsJournal();
+      showToast('Официальный ответ опубликован');
+    }
+
+    // =========================================================================
+    // СТУДИЯ СРАВНЕНИЯ ПРОФИЛЕЙ 360° (COMPARE STUDIO)
+    // =========================================================================
+    function setCompareMode(mode) {
+      state.compareMode = mode;
+      document.getElementById('cmp-mode-teacher').classList.toggle('active', mode === 'teacher');
+      document.getElementById('cmp-mode-student').classList.toggle('active', mode === 'student');
+      populateCompareSelects();
+      renderCompareStudio();
+    }
+
+    function populateCompareSelects() {
+      const list = state.compareMode === 'teacher' ? state.teachers : state.students;
+      const selA = document.getElementById('compare-select-a');
+      const selB = document.getElementById('compare-select-b');
+      if (!selA || !selB) return;
+
+      const optionsHtml = list.map(item => `<option value="${item.id}">${item.name} (X = ${calcX(item)})</option>`).join('');
+      selA.innerHTML = optionsHtml;
+      selB.innerHTML = optionsHtml;
+      if (list.length > 1) selB.value = list[1].id;
+    }
+
+    function renderCompareStudio() {
+      const list = state.compareMode === 'teacher' ? state.teachers : state.students;
+      const idA = Number(document.getElementById('compare-select-a')?.value);
+      const idB = Number(document.getElementById('compare-select-b')?.value);
+      const a = list.find(x => x.id === idA) || list[0];
+      const b = list.find(x => x.id === idB) || list[1];
+      if (!a || !b) return;
+
+      const labels = state.compareMode === 'teacher'
+        ? ['Объяснение', 'Дисциплина', 'Свобода идей']
+        : ['Активность', 'Дисциплина', 'Инициатива'];
+
+      const deltaContainer = document.getElementById('compare-delta-cards');
+      if (deltaContainer) {
+        deltaContainer.innerHTML = `
+          <div class="p-3.5 rounded-2xl bg-white border border-[#471224]/10 flex justify-between text-xs">
+            <span class="font-semibold">${labels[0]}</span>
+            <span class="font-mono-code font-bold">${a.explain.toFixed(1)} vs ${b.explain.toFixed(1)}</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-white border border-[#471224]/10 flex justify-between text-xs">
+            <span class="font-semibold">${labels[1]}</span>
+            <span class="font-mono-code font-bold">${a.discipline.toFixed(1)} vs ${b.discipline.toFixed(1)}</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-white border border-[#471224]/10 flex justify-between text-xs">
+            <span class="font-semibold">${labels[2]}</span>
+            <span class="font-mono-code font-bold">${a.freedom.toFixed(1)} vs ${b.freedom.toFixed(1)}</span>
+          </div>
+        `;
+      }
+
+      const ctx = document.getElementById('compareRadarCanvas')?.getContext('2d');
+      if (!ctx) return;
+      if (compareChart) compareChart.destroy();
+
+      compareChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: [...labels, 'Индекс X', 'Стабильность'],
+          datasets: [
+            {
+              label: a.name,
+              data: [a.explain, a.discipline, a.freedom, calcX(a), (a.explain + a.discipline) / 2],
+              backgroundColor: 'rgba(71, 18, 36, 0.18)',
+              borderColor: '#471224',
+              borderWidth: 2.5
+            },
+            {
+              label: b.name,
+              data: [b.explain, b.discipline, b.freedom, calcX(b), (b.explain + b.discipline) / 2],
+              backgroundColor: 'rgba(217, 119, 6, 0.16)',
+              borderColor: '#d97706',
+              borderWidth: 2.5
+            }
+          ]
+        },
+        options: {
+          scales: {
+            r: { min: 0, max: 10, ticks: { display: false } }
+          }
+        }
+      });
+    }
+
+    // =========================================================================
+    // МОДАЛЬНОЕ ОКНО ОЦЕНИВАНИЯ И ДОСЬЕ 360°
+    // =========================================================================
+    const toxicDict = ['тупой', 'скучно', 'ужас', 'отстой', 'дурак', 'бесит', 'ненавижу'];
+
+    function openEvalModal(type, id) {
+      if (state.role === 'teacher' && type === 'teacher') {
+        showToast('RBAC: Учителя не могут оценивать себя или коллег');
+        return;
+      }
+      if (state.role === 'student' && type === 'student' && id === 101) {
+        showToast('RBAC: Вы не можете оценивать собственный профиль');
+        return;
+      }
+
+      activeEvalTarget = { type, id };
+      const list = type === 'teacher' ? state.teachers : state.students;
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+
+      document.getElementById('eval-modal-role-tag').textContent = type === 'teacher' ? 'Оценка проведения урока' : 'Оценка ученика';
+      document.getElementById('eval-modal-name').textContent = item.name;
+
+      document.getElementById('eval-lbl-1').textContent = type === 'teacher' ? '1. Объяснение материала (1–10)' : '1. Активность и понимание (1–10)';
+      document.getElementById('eval-lbl-2').textContent = '2. Дисциплина и справедливость (1–10)';
+      document.getElementById('eval-lbl-3').textContent = type === 'teacher' ? '3. Свобода идей и диалог (1–10)' : '3. Инициатива и командность (1–10)';
+
+      document.getElementById('eval-rng-1').value = Math.round(item.explain);
+      document.getElementById('eval-rng-2').value = Math.round(item.discipline);
+      document.getElementById('eval-rng-3').value = Math.round(item.freedom);
+      document.getElementById('eval-arg-text').value = '';
+      recalcEvalModal();
+
+      const modal = document.getElementById('eval-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEvalModal() {
+      const modal = document.getElementById('eval-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function applyEvalPreset(a, b, c) {
+      document.getElementById('eval-rng-1').value = a;
+      document.getElementById('eval-rng-2').value = b;
+      document.getElementById('eval-rng-3').value = c;
+      recalcEvalModal();
+    }
+
+    function selectFactorChip(el) {
+      document.querySelectorAll('#eval-factors-box .factor-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function recalcEvalModal() {
+      const s1 = Number(document.getElementById('eval-rng-1').value);
+      const s2 = Number(document.getElementById('eval-rng-2').value);
+      const s3 = Number(document.getElementById('eval-rng-3').value);
+
+      document.getElementById('eval-val-1').textContent = `${s1} / 10`;
+      document.getElementById('eval-val-2').textContent = `${s2} / 10`;
+      document.getElementById('eval-val-3').textContent = `${s3} / 10`;
+
+      const x = Number(((s1 + s2 + s3) / 3).toFixed(1));
+      const meta = getZoneMeta(x, activeEvalTarget.type === 'teacher');
+
+      const banner = document.getElementById('eval-status-banner');
+      banner.className = `p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border ${meta.badgeClass}`;
+      document.getElementById('eval-x-formula').textContent = `X = (${s1} + ${s2} + ${s3}) / 3 = ${x.toFixed(1)}`;
+      document.getElementById('eval-x-verdict').textContent = `${meta.formula}: ${meta.statusText}`;
+
+      const text = document.getElementById('eval-arg-text').value.trim();
+      document.getElementById('eval-char-count').textContent = `${text.length} / 25 симв.`;
+
+      const isToxic = toxicDict.some(w => text.toLowerCase().includes(w));
+      const alertBox = document.getElementById('eval-ai-alert');
+      const btn = document.getElementById('eval-submit-btn');
+
+      if (isToxic) {
+        alertBox.classList.remove('hidden');
+        btn.disabled = true;
+        btn.className = 'px-6 py-3.5 rounded-full bg-[#471224]/35 text-white text-xs font-semibold cursor-not-allowed';
+        btn.textContent = 'Заблокировано ИИ-фильтром';
+      } else if (x < 5.0 && text.length < 25) {
+        alertBox.classList.add('hidden');
+        btn.disabled = true;
+        btn.className = 'px-6 py-3.5 rounded-full bg-[#471224]/35 text-white text-xs font-semibold cursor-not-allowed';
+        btn.textContent = `При X < 5 нужна аргументация (ещё ${25 - text.length} симв.)`;
+      } else {
+        alertBox.classList.add('hidden');
+        btn.disabled = false;
+        btn.className = 'px-7 py-3.5 rounded-full bg-[#471224] text-white text-xs font-semibold hover:bg-[#5e1830] transition';
+        btn.textContent = 'Сохранить оценку';
+      }
+    }
+
+    function insertToxicSample() {
+      document.getElementById('eval-arg-text').value = 'Было ужасно скучно, ничего не понятно на уроке!';
+      recalcEvalModal();
+    }
+
+    function rewriteWithAi() {
+      document.getElementById('eval-arg-text').value = 'Во второй половине занятия темп объяснения показался слишком быстрым. Хотелось бы разобрать еще два практических примера у доски и заранее видеть критерии оценки.';
+      recalcEvalModal();
+      showToast('ИИ-помощник преобразовал текст в конструктивный аргумент');
+    }
+
+    function submitEvaluation() {
+      const s1 = Number(document.getElementById('eval-rng-1').value);
+      const s2 = Number(document.getElementById('eval-rng-2').value);
+      const s3 = Number(document.getElementById('eval-rng-3').value);
+      const x = Number(((s1 + s2 + s3) / 3).toFixed(1));
+      const text = document.getElementById('eval-arg-text').value.trim();
+
+      const list = activeEvalTarget.type === 'teacher' ? state.teachers : state.students;
+      const target = list.find(item => item.id === activeEvalTarget.id);
+      if (!target) return;
+
+      target.explain = Number(((target.explain * 3 + s1) / 4).toFixed(1));
+      target.discipline = Number(((target.discipline * 3 + s2) / 4).toFixed(1));
+      target.freedom = Number(((target.freedom * 3 + s3) / 4).toFixed(1));
+      if (target.count) target.count += 1;
+
+      if (text.length >= 10) {
+        const factor = document.querySelector('#eval-factors-box .factor-chip.active')?.textContent || 'Аргумент';
+        state.argumentsFeed.unshift({
+          id: 'arg-' + Date.now(),
+          target: target.name,
+          author: state.role === 'student' ? 'Ученик (9 класс)' : (state.role === 'teacher' ? 'Учитель' : 'Директор'),
+          x,
+          factor,
+          text,
+          reply: ''
+        });
+      }
+
+      logRbacEvent(`Сохранена оценка для ${target.name} (X = ${calcX(target)})`);
+      closeEvalModal();
+      renderAll();
+      showToast(`Оценка для ${target.name} сохранена (X = ${calcX(target)})`);
+    }
+
+    // Досье 360°
+    function openDossierModal(type, id) {
+      const list = type === 'teacher' ? state.teachers : state.students;
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+
+      const x = calcX(item);
+      const meta = getZoneMeta(x, type === 'teacher');
+
+      document.getElementById('dossier-type-label').textContent = type === 'teacher' ? 'Canalytics 360° • Досье Преподавателя' : 'Canalytics 360° • Паспорт Ученика';
+      document.getElementById('dossier-title-name').textContent = item.name;
+      document.getElementById('dossier-x-badge').textContent = `X = ${x.toFixed(1)}`;
+      document.getElementById('dossier-status-text').textContent = `${meta.formula} • ${meta.statusText}`;
+
+      const l1 = type === 'teacher' ? 'Объяснение' : 'Активность';
+      const l2 = 'Дисциплина';
+      const l3 = type === 'teacher' ? 'Свобода идей' : 'Инициатива';
+
+      document.getElementById('dossier-metrics-row').innerHTML = `
+        <div class="p-3.5 rounded-2xl bg-[#fef0d5]/50">
+          <div class="text-[11px] font-semibold text-[#471224]/65">${l1}</div>
+          <div class="text-xl font-bold text-[#471224]">${item.explain.toFixed(1)}</div>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-[#fef0d5]/50">
+          <div class="text-[11px] font-semibold text-[#471224]/65">${l2}</div>
+          <div class="text-xl font-bold text-[#471224]">${item.discipline.toFixed(1)}</div>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-[#fef0d5]/50">
+          <div class="text-[11px] font-semibold text-[#471224]/65">${l3}</div>
+          <div class="text-xl font-bold text-[#471224]">${item.freedom.toFixed(1)}</div>
+        </div>
+      `;
+
+      const modal = document.getElementById('dossier-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      setTimeout(() => {
+        const rCtx = document.getElementById('dossierRadarCanvas').getContext('2d');
+        if (dossierRadar) dossierRadar.destroy();
+        dossierRadar = new Chart(rCtx, {
+          type: 'radar',
+          data: {
+            labels: [l1, l2, l3, 'Объективность', 'Диалог'],
+            datasets: [{
+              data: [item.explain, item.discipline, item.freedom, x, (item.explain + item.freedom) / 2],
+              backgroundColor: 'rgba(71, 18, 36, 0.16)',
+              borderColor: '#471224',
+              borderWidth: 2.5
+            }]
+          },
+          options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } }, plugins: { legend: { display: false } } }
+        });
+
+        const tCtx = document.getElementById('dossierTrendCanvas').getContext('2d');
+        if (dossierTrend) dossierTrend.destroy();
+        dossierTrend = new Chart(tCtx, {
+          type: 'line',
+          data: {
+            labels: ['Нед. 1', 'Нед. 2', 'Нед. 3', 'Нед. 4', 'Сейчас'],
+            datasets: [{
+              label: 'Динамика индекса X',
+              data: [...(item.history || [8, 8.2, 8.4, 8.5]), x],
+              borderColor: '#471224',
+              backgroundColor: 'rgba(71, 18, 36, 0.1)',
+              fill: true,
+              tension: 0.35
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 10 } } }
+        });
+      }, 50);
+    }
+
+    function closeDossierModal() {
+      const modal = document.getElementById('dossier-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Spotlight Поиск (Cmd + K)
+    function openSpotlight() {
+      const modal = document.getElementById('spotlight-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      const input = document.getElementById('spotlight-input');
+      input.value = '';
+      renderSpotlightResults('');
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeSpotlight() {
+      const modal = document.getElementById('spotlight-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function renderSpotlightResults(query) {
+      const box = document.getElementById('spotlight-results');
+      const q = query.toLowerCase().trim();
+      const matches = [
+        ...state.teachers.filter(t => !q || t.name.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q)).slice(0, 4).map(t => ({
+          type: 'teacher', id: t.id, title: t.name, sub: `Учитель • ${t.subject} • X = ${calcX(t)}`
+        })),
+        ...state.students.filter(s => !q || s.name.toLowerCase().includes(q) || s.klass.toLowerCase().includes(q)).slice(0, 4).map(s => ({
+          type: 'student', id: s.id, title: s.name, sub: `Ученик • ${s.klass} • X = ${calcX(s)}`
+        }))
+      ];
+
+      box.innerHTML = matches.map(m => `
+        <div onclick="closeSpotlight(); openDossierModal('${m.type}', ${m.id});" class="p-3 rounded-2xl hover:bg-[#fef0d5]/70 cursor-pointer flex items-center justify-between text-xs">
+          <div>
+            <div class="font-bold text-[#471224]">${m.title}</div>
+            <div class="text-[#471224]/60">${m.sub}</div>
+          </div>
+          <span class="font-semibold text-[#471224]">Досье 360° →</span>
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openSpotlight();
+      } else if (e.key === 'Escape') {
+        closeSpotlight();
+        closeEvalModal();
+        closeDossierModal();
+      }
+    });
+
+    // Навигация по вкладкам
+    function switchTab(tabId) {
+      ['teachers', 'students', 'matrix', 'compare', 'rbac'].forEach(t => {
+        document.getElementById(`sec-${t}`).classList.toggle('hidden', t !== tabId);
+        const dBtn = document.getElementById(`nav-desk-${t}`);
+        if (dBtn) dBtn.classList.toggle('active', t === tabId);
+        const mBtn = document.getElementById(`nav-mob-${t}`);
+        if (mBtn) {
+          mBtn.className = t === tabId
+            ? 'flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl text-[#471224] font-bold'
+            : 'flex flex-col items-center gap-1 py-1 px-2.5 rounded-2xl text-[#471224]/50 font-medium';
+        }
+      });
+
+      if (tabId === 'compare') renderCompareStudio();
+      if (tabId === 'matrix' && parallelChart) setTimeout(() => parallelChart.resize(), 50);
+    }
+
+    function renderRbacAudit() {
+      const feed = document.getElementById('rbac-audit-feed');
+      if (!feed) return;
+      feed.innerHTML = state.auditLogs.map(l => `
+        <div class="p-3 rounded-xl bg-[#fef0d5]/50 border border-[#471224]/10 flex items-start justify-between gap-2">
+          <div>
+            <span class="px-1.5 py-0.5 rounded bg-[#471224] text-[#fef0d5] text-[10px] font-bold mr-1.5">${l.role}</span>
+            <span>${l.action}</span>
+          </div>
+          <span class="text-[#471224]/50 shrink-0">${l.time}</span>
+        </div>
+      `).join('');
+    }
+
+    function resetSystemData() {
+      localStorage.removeItem(STORAGE_KEY);
+      state = JSON.parse(JSON.stringify(defaultData));
+      saveState();
+      renderAll();
+      showToast('Демо-данные Canalytics сброшены к исходным');
+    }
+
+    function renderAll() {
+      const tAvg = (state.teachers.reduce((acc, t) => acc + calcX(t), 0) / state.teachers.length).toFixed(1);
+      const sAvg = (state.students.reduce((acc, s) => acc + calcX(s), 0) / state.students.length).toFixed(1);
+      document.getElementById('kpi-teachers-avg').textContent = tAvg;
+      document.getElementById('kpi-students-avg').textContent = sAvg;
+      document.getElementById('kpi-arguments-count').textContent = state.argumentsFeed.length;
+
+      renderRoleBanner();
+      renderTeachers();
+      renderStudents();
+      renderActiveProtocols();
+      renderArgumentsJournal();
+      renderRbacAudit();
+      lucide.createIcons();
+    }
+
+    function initParallelChart() {
+      const ctx = document.getElementById('parallelAnalyticsChart')?.getContext('2d');
+      if (!ctx) return;
+      parallelChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['8 параллель', '9 параллель', '10 параллель', '11 параллель'],
+          datasets: [
+            { label: 'Индекс учителей', data: [8.4, 9.2, 8.9, 9.4], backgroundColor: '#471224', borderRadius: 6 },
+            { label: 'Индекс учеников', data: [8.1, 9.3, 8.7, 9.5], backgroundColor: '#d97706', borderRadius: 6 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 10 } } }
+      });
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = 'px-5 py-3.5 rounded-2xl bg-[#471224] text-[#fef0d5] text-xs font-semibold shadow-xl transition-all duration-300';
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 2800);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      populateCompareSelects();
+      initParallelChart();
+      renderAll();
+    });
+  </script>
+</body>
+</html>
